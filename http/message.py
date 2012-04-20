@@ -5,6 +5,7 @@ class Message:
 
     * msg: underlying dpkt class
     * data_consumed: how many bytes of input were consumed
+    * raw_msg: raw message, including http header, as a string
     * seq_start: first sequence number of the Message's data in the tcpdir
     * seq_end: first sequence number past Message's data (slice-style indices)
     * ts_start: when Message started arriving (dpkt timestamp)
@@ -32,3 +33,4 @@ class Message:
         self.ts_end = tcpdir.seq_final_arrival(self.seq_end - 1)
         # get raw body
         self.raw_body = self.msg.body
+        self.raw_msg = self.tcpdir.data[pointer:(pointer+self.data_consumed)]
