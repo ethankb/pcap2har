@@ -65,9 +65,8 @@ session = httpsession.HttpSession(dispatcher)
 
 logging.info("Flows=%d. HTTP pairs=%d" % (len(session.flows),len(session.entries)))
 
-# TODO(ethankb): expose it as a flag
-fnum = 0
 if options.write_responses:
+  fnum = 0
   for entry in session.entries:
     # Named by timestamp to allow processing in order and by fnum to
     # differentiate between responses with the same timestamp.
