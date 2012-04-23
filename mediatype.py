@@ -30,6 +30,9 @@ class MediaType(object):
         Args:
         data = string, the media type string
         '''
+        if settings.allow_empty_mediatype and not data:
+          log.warning('Setting empty mediatype to x-unknown-content-type')
+          data = 'application/x-unknown-content-type'
         match = self.mediatype_re.match(data)
         if not match and settings.allow_trailing_semicolon:
           match = self.mediatype_trailing_semicolon_re.match(data)
