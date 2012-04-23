@@ -29,6 +29,9 @@ parser.add_option('--allow_empty_mediatype', action="store_true",
 parser.add_option('--no-pages', action="store_false", dest="pages", default=True)
 parser.add_option('--pad_missing_tcp_data', action="store_true",
                   dest="pad_missing_tcp_data", default=False)
+# Whether to write HTTP responses, one per file.
+parser.add_option('--write_responses', action="store_true",
+                  dest="write_responses", default=False)
 options, args = parser.parse_args()
 
 # copy options to settings module
@@ -61,6 +64,19 @@ dispatcher.finish()
 session = httpsession.HttpSession(dispatcher)
 
 logging.info("Flows=%d. HTTP pairs=%d" % (len(session.flows),len(session.entries)))
+
+# TODO(ethankb): expose it as a flag
+fnum = 0
+if options.write_responses:
+  for entry in session.entries:
+    # Named by timestamp to allow processing in order and by fnum to
+    # differentiate between responses with the same timestamp.
+    fn = '%s-%s-%d.response' % (outputfile,
+                                str(entry.response.ts_end).replace('.', '_'),
+                                fnum)
+    fnum += 1
+    with open(fn, 'w') as f:
+      f.write(entry.response.raw_msg)
 
 #write the HAR file
 with open(outputfile, 'w') as f:
