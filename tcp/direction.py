@@ -179,7 +179,8 @@ class Direction:
         '''
         try:
             return self.final_arrival_data.find_le(seq_num)[1]
-        except:
+        except ValueError as err:
+            logging.warn('Unable to find final arrival seq: %s', err)
             return None
 
     def pad_missing_data(self):
