@@ -53,7 +53,14 @@ class MediaType(object):
                     self.params[pairmatch.group(1)] = pairmatch.group(2)
             pass
         else:
-            raise ValueError('invalid media type string: ' + data)
+            if settings.strict_mediatype_parsing:
+              raise ValueError('invalid media type string: ' + data)
+            else:
+              log.warning('Allowing invalid mediatype: %s' % data)
+              self.type = data
+              self.subtype = None
+              self.params = {}
+
     def mimeType(self):
         return '%s/%s' % (self.type, self.subtype)
     def __str__(self):
