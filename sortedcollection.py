@@ -7,6 +7,7 @@ Modified by Andrew Fleenor 18 Feb 2011
 '''
 
 
+import logging
 from bisect import bisect_left, bisect_right
 
 class SortedCollection(object):
@@ -167,6 +168,8 @@ class SortedCollection(object):
         if self._keys[i] == key:
             return self._items[i]
         if i == 0:
+            logging.warn('No item found with key at or below: %r in %s [%s]',
+                         key, self._keys, self._items)
             raise ValueError('No item found with key at or below: %r' % (key,))
         return self._items[i-1]
 
