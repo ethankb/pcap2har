@@ -26,6 +26,8 @@ parser.add_option('--allow_trailing_semicolon', action="store_true",
                   dest="allow_trailing_semicolon", default=False)
 parser.add_option('--allow_empty_mediatype', action="store_true",
                   dest="allow_empty_mediatype", default=False)
+parser.add_option('--strict_mediatype_parsing', action="store_true",
+                  dest="strict_mediatype_parsing", default=False)
 parser.add_option('--no-pages', action="store_false", dest="pages", default=True)
 parser.add_option('--pad_missing_tcp_data', action="store_true",
                   dest="pad_missing_tcp_data", default=False)
@@ -39,6 +41,7 @@ settings.process_pages = options.pages
 settings.pad_missing_tcp_data = options.pad_missing_tcp_data
 settings.allow_trailing_semicolon = options.allow_trailing_semicolon
 settings.allow_empty_mediatype = options.allow_empty_mediatype
+settings.strict_mediatype_parsing = options.strict_mediatype_parsing
 
 # setup logs
 logging.basicConfig(filename='pcap2har.log', level=logging.INFO)
