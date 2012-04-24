@@ -1,3 +1,6 @@
+import logging as log
+
+
 class Message:
     '''
     Contains a dpkt.http.Request/Response, as well as other data required to
@@ -31,6 +34,15 @@ class Message:
         # calculate arrival_times
         self.ts_start = tcpdir.seq_final_arrival(self.seq_start)
         self.ts_end = tcpdir.seq_final_arrival(self.seq_end - 1)
+        if self.ts_start is None:
+          if self.ts_end is None:
+            self.ts_end = 0
+          self.ts_start = self.ts_end
+        if self.ts_end is None:
+          self.ts_end = self.ts_start
         # get raw body
         self.raw_body = self.msg.body
         self.raw_msg = self.tcpdir.data[pointer:(pointer+self.data_consumed)]
+        log.info("%s-%s [%s] (%s) for %s", self.ts_start, self.ts_end,
+                 self.seq_start, pointer, msgclass)
+        log.info(self.raw_msg)
