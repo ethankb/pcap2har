@@ -10,6 +10,10 @@ allow_trailing_semicolon = False
 # application/x-unknown-content-type.  If disallowed, will raise ValueError.
 allow_empty_mediatype = False
 
+# Whether HTTP parsing should case whether the format of the mediatype matches
+# allowable patterns.
+strict_mediatype_parsing = False
+
 # Whether HTTP parsing should case whether the content length matches the
 # content-length header.
 strict_http_parse_body = True
