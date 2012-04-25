@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import dpkt
 import optparse
 import logging
 import sys
