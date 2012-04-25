@@ -1,4 +1,5 @@
 import dpkt
+import logging
 from ..pcaputil import friendly_socket
 from ..pcaputil import friendly_tcp_flags
 from ..pcaputil import friendly_data
@@ -42,6 +43,8 @@ class Packet(object):
         self.seq_start = self.tcp.seq
         self.seq_end = self.tcp.seq + len(self.tcp.data) # - 1
         self.rtt = None
+        logging.info('Creating pkt(%s,%s-%s)',
+                     self.ts, self.seq_start, self.seq_end)
 
     def __cmp__(self, other):
         return cmp(self.ts, other.ts)
@@ -80,6 +83,8 @@ class PadPacket(Packet):
     self.seq_start = seq
     self.seq_end = self.seq_start + size
     self.rtt = None
+    logging.info('Creating Pad-pkt(%s,%s-%s)',
+                 self.ts, self.seq_start, self.seq_end)
 
   def __repr__(self):
     return 'PadPacket(seq=%d, size=%d)' % (self.seq, len(self.data))
