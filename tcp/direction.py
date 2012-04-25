@@ -72,16 +72,15 @@ class Direction:
                         self.final_data_chunk = chunk
                     self.final_arrival_pointer = self.final_data_chunk.seq_end
                 merged = True
-                logging.info('(%s) Adding pkt(%s,%s-%s)', self, pkt.ts,
-                             chunk.seq_start, chunk.seq_end)
                 break # skip further chunks
         if not merged:
             # nothing overlapped with the packet
             # we need a new chunk
             # TODO(ethankb): adding this return value for debugging.  Remove?
             chunk = self.new_chunk(pkt)
-            logging.info('(%s) Adding pkt(%s,%s-%s)', self, pkt.ts,
-                         chunk.seq_start, chunk.seq_end)
+        logging.info('(%s) Adding pkt(%s,%s-%s) to chunk(%s-%s)',
+                     self, pkt.ts, pkt.seq_start, pkt.seq_end,
+                     chunk.seq_start, chunk.seq_end)
     @property
     def data(self):
         '''
