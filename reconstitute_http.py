@@ -4,6 +4,7 @@ import optparse
 import logging
 import sys
 
+from pcap2har import http
 from pcap2har import pcap
 from pcap2har import settings
 from pcap2har.http import flow as httpflow
@@ -66,10 +67,10 @@ for tcpflow in dispatcher.tcp.flowdict.itervalues():
         tcpflow.fwd, tcpflow.rev)
   except (http.Error,):
     error = sys.exc_info()[1]
-    log.warning(error)
+    logging.warning(error)
   except (dpkt.dpkt.Error,):
     error = sys.exc_info()[1]
-    log.warning(error)
+    logging.warning(error)
   # if not, try parsing it the other way
   if not success:
     try:
@@ -77,10 +78,10 @@ for tcpflow in dispatcher.tcp.flowdict.itervalues():
           tcpflow.rev, tcpflow.fwd)
     except (http.Error,):
       error = sys.exc_info()[1]
-      log.warning(error)
+      logging.warning(error)
     except (dpkt.dpkt.Error,):
       error = sys.exc_info()[1]
-      log.warning(error)
+      logging.warning(error)
   if success:
     for r in requests + responses:
       fn = '%s-%s-%d.%s' % (outputfile, str(r.ts_end).replace('.', '_'), fnum,
