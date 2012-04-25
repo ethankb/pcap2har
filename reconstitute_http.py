@@ -24,8 +24,6 @@ parser.add_option('--no-pages', action="store_false", dest="pages", default=True
 parser.add_option('--pad_missing_tcp_data', action="store_true",
                   dest="pad_missing_tcp_data", default=False)
 # Whether to write HTTP responses, one per file.
-parser.add_option('--write_responses', action="store_true",
-                  dest="write_responses", default=False)
 options, args = parser.parse_args()
 
 # copy options to settings module
