@@ -23,6 +23,7 @@ class Message:
         pointer = position within tcpdir.data to start parsing from. byte index
         msgclass = dpkt.http.Request/Response
         '''
+        self.total_padding = 0
         self.tcpdir = tcpdir
         # attempt to parse as http. let exception fall out to caller
         self.msg = msgclass(tcpdir.data[pointer:])
@@ -51,3 +52,10 @@ class Message:
         self.raw_msg = self.tcpdir.data[pointer:(pointer+self.data_consumed)]
         log.info("%s-%s [%s] (%s) for %s", self.ts_start, self.ts_end,
                  self.seq_start, pointer, msgclass)
+        for start_byte, length in sorted(tcpdir.padding_intervals):
+          if start_byte >= self.seq_start and start_byte <= self.seq_end:
+            if start_byte + length <= self.seq_end:
+              self.total_padding += length
+            else:
+              log.warn("Padding mismatch: %d plus %d does not fit in %d to %d",
+                       start_byte, length, self.seq_start, self.seq_end)

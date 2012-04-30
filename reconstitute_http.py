@@ -88,6 +88,9 @@ for tcpflow in dispatcher.tcp.flowdict.itervalues():
       fnum += 1
       with open(fn, 'w') as f:
         f.write(r.raw_msg)
+      if r.total_padding > 0:
+        logging.info("%s has %d bytes of padding out of %d", fn, r.total_padding,
+                     r.data_consumed)
   else:
     # flow is not HTTP
     logging.warn('TCP Flow does not contain HTTP')
