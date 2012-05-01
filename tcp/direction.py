@@ -7,8 +7,6 @@ import packet
 import seq
 
 
-total_padding = 0
-
 class Direction:
     '''
     Represents data moving in one direction in a TCP flow.
@@ -214,18 +212,15 @@ class Direction:
 
     def pad_missing_data(self):
       '''Pad missing data in the flow with zero bytes.'''
-      global total_padding
       if not self.chunks:
         return
       prev_chunk = self.chunks[0]
       for chunk in self.chunks[1:]:
         gap = chunk.seq_start - prev_chunk.seq_end
-        total_padding += gap
         self.padding_size += gap
         if gap > 0:
-          logging.info('Padding %d missing bytes at %d for %s %d. Total %d',
-                       gap, prev_chunk.seq_end, self, self.padding_size,
-                       total_padding)
+          logging.info('Padding %d missing bytes at %d for %s %d',
+                       gap, prev_chunk.seq_end, self, self.padding_size)
           first_chunk_pkt = self.seq_arrival(chunk.seq_start)
           chunk_ts = first_chunk_pkt.ts
           pad_pkt = packet.PadPacket(prev_chunk.seq_end, gap, chunk_ts)

@@ -24,7 +24,7 @@ class Message:
         pointer = position within tcpdir.data to start parsing from. byte index
         msgclass = dpkt.http.Request/Response
         '''
-        self.total_padding = 0
+        self.bytes_of_padding = 0
         self.tcpdir = tcpdir
         # attempt to parse as http. let exception fall out to caller
         self.msg = msgclass(tcpdir.data[pointer:])
@@ -70,7 +70,7 @@ class Message:
                             (start_byte, length), last_padding)
                 next
               else:
-                self.total_padding += length
+                self.bytes_of_padding += length
                 self.padding_intervals.append((start_byte, length))
                 last_padding = (start_byte, length)
             else:
@@ -84,25 +84,12 @@ class Message:
         omit_padding: whether or not to remove all padding bytes.
       '''
       if omit_padding:
-        log.info('Omitting padding for %d-%d len %d w %s', self.seq_end,
-                 self.seq_start, len(self.raw_msg), self.padding_intervals)
         msg = ""
         current_byte = 0
-        total_padding = 0
         for start_byte, length in self.padding_intervals:
           msg += self.raw_msg[current_byte:(start_byte-self.seq_start)]
-          log.info('Adding %d-%d, padding %d-%d for %s', start_byte,
-                   current_byte + self.seq_start, start_byte+length, start_byte,
-                   (start_byte,length))
           current_byte = start_byte - self.seq_start + length
-          total_padding += length
         msg += self.raw_msg[current_byte:]
-        log.info('Adding %d-%d', self.seq_end, current_byte +
-                 self.seq_start)
-        if total_padding > 0:
-          log.info('Length w padding: %d wo: %d padding: %d combined %d',
-                   len(self.raw_msg), len(msg), total_padding, len(msg) +
-                   total_padding)
         return msg
       else:
         return self.raw_msg
