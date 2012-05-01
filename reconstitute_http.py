@@ -57,42 +57,44 @@ pcap.ParsePcap(dispatcher, filename=inputfile)
 dispatcher.finish()
 
 fnum = 0
-for tcpflow in dispatcher.tcp.flowdict.itervalues():
-  # try parsing it with forward as request dir
-  # TODO(ethankb): Should the try be around the whole block? Not sure if it can
-  # parse in one direction but not the other.  Probably not, but doing this for
-  # now to be safe.
-  success = False
+for flow in dispatcher.tcp.flowdict.itervalues():
   try:
-    success, requests, responses = httpflow.parse_streams(
-        tcpflow.fwd, tcpflow.rev)
+    http_flow = http.Flow(flow)
+    for message_pair in http_flow.pairs:
+      request = message_pair.request
+      response = message_pair.response
+      fn = '%s-%s-%d' % (outputfile, str(request.ts_end).replace('.', '_'),
+                         fnum)
+      fnum += 1
+      with open(fn + '.request', 'w') as f:
+        f.write(request.raw_message(not options.padding_in_output))
+      with open(fn + '.response', 'w') as f:
+        f.write(response.raw_message(not options.padding_in_output))
+
+      if request.bytes_of_padding > 0:
+        logging.info("%s.request has %d bytes of padding out of %d", fn,
+                     request.bytes_of_padding, request.data_consumed)
+      if response.bytes_of_padding > 0:
+        logging.info("%s.response has %d bytes of padding out of %d", fn,
+                     response.bytes_of_padding, response.data_consumed)
+
+      user_agent = None
+      if 'user-agent' in request.msg.headers:
+        user_agent = request.msg.headers['user-agent']
+      print("%s\t%s\t%s\t%s" % (fn, request.fullurl, user_agent,
+                                response.mimeType))
   except (http.Error,):
     error = sys.exc_info()[1]
     logging.warning(error)
   except (dpkt.dpkt.Error,):
     error = sys.exc_info()[1]
     logging.warning(error)
-  # if not, try parsing it the other way
-  if not success:
-    try:
-      success, requests, responses = httpflow.parse_streams(
-          tcpflow.rev, tcpflow.fwd)
-    except (http.Error,):
-      error = sys.exc_info()[1]
-      logging.warning(error)
-    except (dpkt.dpkt.Error,):
-      error = sys.exc_info()[1]
-      logging.warning(error)
-  if success:
-    for r in requests + responses:
-      fn = '%s-%s-%d.%s' % (outputfile, str(r.ts_end).replace('.', '_'), fnum,
-                            r.__class__.__name__.lower())
-      fnum += 1
-      with open(fn, 'w') as f:
-        f.write(r.raw_message(not options.padding_in_output))
-      if r.bytes_of_padding > 0:
-        logging.info("%s has %d bytes of padding out of %d", fn, r.bytes_of_padding,
-                     r.data_consumed)
-  else:
-    # flow is not HTTP
-    logging.warn('TCP Flow does not contain HTTP')
+#     for r in requests + responses:
+#       fn = '%s-%s-%d.%s' % (outputfile, str(r.ts_end).replace('.', '_'), fnum,
+#                             r.__class__.__name__.lower())
+#       fnum += 1
+#       with open(fn, 'w') as f:
+#         f.write(r.raw_message(not options.padding_in_output))
+#       if r.bytes_of_padding > 0:
+#         logging.info("%s has %d bytes of padding out of %d", fn, r.bytes_of_padding,
+#                      r.data_consumed)
