@@ -15,6 +15,7 @@ class Message:
     * ts_end: when Message had fully arrived (dpkt timestamp)
     * body_raw: body before compression is taken into account
     * tcpdir: The tcp.Direction corresponding to the HTTP message
+    * padding_intervals: [(seq start byte, length)]
     '''
     def __init__(self, tcpdir, pointer, msgclass):
         '''
@@ -52,10 +53,56 @@ class Message:
         self.raw_msg = self.tcpdir.data[pointer:(pointer+self.data_consumed)]
         log.info("%s-%s [%s] (%s) for %s", self.ts_start, self.ts_end,
                  self.seq_start, pointer, msgclass)
-        for start_byte, length in sorted(tcpdir.padding_intervals):
+        self.padding_intervals=[]
+        last_padding = None
+        # iterate in ascending time order, break ties with descending length to
+        # handle overlapping ones gracefully
+        for start_byte, length in sorted(tcpdir.padding_intervals, lambda x,y:
+                                         cmp((x[0],-1*x[1]), (y[0],-1*y[1]))):
           if start_byte >= self.seq_start and start_byte <= self.seq_end:
             if start_byte + length <= self.seq_end:
-              self.total_padding += length
+              if (last_padding and
+                  start_byte <= last_padding[0] + last_padding[1]):
+                log.info("Padding %s redundant with padding %s",
+                         (start_byte, length), last_padding)
+                if start_byte + length > last_padding[0] + last_padding[1]:
+                  log.fatal("Padding %s overhangs padding %s",
+                            (start_byte, length), last_padding)
+                next
+              else:
+                self.total_padding += length
+                self.padding_intervals.append((start_byte, length))
+                last_padding = (start_byte, length)
             else:
               log.warn("Padding mismatch: %d plus %d does not fit in %d to %d",
                        start_byte, length, self.seq_start, self.seq_end)
+
+    def raw_message(self, omit_padding=False):
+      '''
+      Returns the message as a byte string.
+      Args:
+        omit_padding: whether or not to remove all padding bytes.
+      '''
+      if omit_padding:
+        log.info('Omitting padding for %d-%d len %d w %s', self.seq_end,
+                 self.seq_start, len(self.raw_msg), self.padding_intervals)
+        msg = ""
+        current_byte = 0
+        total_padding = 0
+        for start_byte, length in self.padding_intervals:
+          msg += self.raw_msg[current_byte:(start_byte-self.seq_start)]
+          log.info('Adding %d-%d, padding %d-%d for %s', start_byte,
+                   current_byte + self.seq_start, start_byte+length, start_byte,
+                   (start_byte,length))
+          current_byte = start_byte - self.seq_start + length
+          total_padding += length
+        msg += self.raw_msg[current_byte:]
+        log.info('Adding %d-%d', self.seq_end, current_byte +
+                 self.seq_start)
+        if total_padding > 0:
+          log.info('Length w padding: %d wo: %d padding: %d combined %d',
+                   len(self.raw_msg), len(msg), total_padding, len(msg) +
+                   total_padding)
+        return msg
+      else:
+        return self.raw_msg
