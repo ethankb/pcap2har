@@ -57,38 +57,39 @@ pcap.ParsePcap(dispatcher, filename=inputfile)
 dispatcher.finish()
 
 fnum = 0
-for flow in dispatcher.tcp.flowdict.itervalues():
-  try:
-    http_flow = http.Flow(flow)
-    for message_pair in http_flow.pairs:
-      request = message_pair.request
-      response = message_pair.response
-      fn = '%s-%s-%d' % (outputfile, str(request.ts_end).replace('.', '_'),
-                         fnum)
-      fnum += 1
-      with open(fn + '.request', 'w') as f:
-        f.write(request.raw_message(not options.padding_in_output))
-      with open(fn + '.response', 'w') as f:
-        f.write(response.raw_message(not options.padding_in_output))
+for flowlist in dispatcher.tcp.flowdict.itervalues():
+  for flow in flowlist:
+    try:
+      http_flow = http.Flow(flow)
+      for message_pair in http_flow.pairs:
+        request = message_pair.request
+        response = message_pair.response
+        fn = '%s-%s-%d' % (outputfile, str(request.ts_end).replace('.', '_'),
+                           fnum)
+        fnum += 1
+        with open(fn + '.request', 'w') as f:
+          f.write(request.raw_message(not options.padding_in_output))
+        with open(fn + '.response', 'w') as f:
+          f.write(response.raw_message(not options.padding_in_output))
 
-      if request.bytes_of_padding > 0:
-        logging.info("%s.request has %d bytes of padding out of %d", fn,
-                     request.bytes_of_padding, request.data_consumed)
-      if response.bytes_of_padding > 0:
-        logging.info("%s.response has %d bytes of padding out of %d", fn,
-                     response.bytes_of_padding, response.data_consumed)
+        if request.bytes_of_padding > 0:
+          logging.info("%s.request has %d bytes of padding out of %d", fn,
+                       request.bytes_of_padding, request.data_consumed)
+        if response.bytes_of_padding > 0:
+          logging.info("%s.response has %d bytes of padding out of %d", fn,
+                       response.bytes_of_padding, response.data_consumed)
 
-      user_agent = None
-      if 'user-agent' in request.msg.headers:
-        user_agent = request.msg.headers['user-agent']
-      print("%s\t%s\t%s\t%s" % (fn, request.fullurl, user_agent,
-                                response.mimeType))
-  except (http.Error,):
-    error = sys.exc_info()[1]
-    logging.warning(error)
-  except (dpkt.dpkt.Error,):
-    error = sys.exc_info()[1]
-    logging.warning(error)
+        user_agent = None
+        if 'user-agent' in request.msg.headers:
+          user_agent = request.msg.headers['user-agent']
+        print("%s\t%s\t%s\t%s" % (fn, request.fullurl, user_agent,
+                                  response.mimeType))
+    except (http.Error,):
+      error = sys.exc_info()[1]
+      logging.warning(error)
+    except (dpkt.dpkt.Error,):
+      error = sys.exc_info()[1]
+      logging.warning(error)
 #     for r in requests + responses:
 #       fn = '%s-%s-%d.%s' % (outputfile, str(r.ts_end).replace('.', '_'), fnum,
 #                             r.__class__.__name__.lower())
