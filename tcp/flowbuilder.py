@@ -6,7 +6,8 @@ class FlowBuilder:
     Builds and stores tcp.Flow's from packets.
 
     Takes a series of tcp.Packet's and sorts them into the correct tcp.Flow's
-    based on their socket. Exposes them in a dictionary keyed by socket. Call
+    based on their socket. Exposes them in a dictionary keyed by socket. Each
+    socket maps to a list of flows.  Call
     .add(pkt) for each packet. This will find the right tcp.Flow in the dict and
     call .add() on it. This class should be renamed.
 
