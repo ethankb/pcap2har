@@ -1,3 +1,4 @@
+import direction
 import flow as tcp
 import logging as log
 

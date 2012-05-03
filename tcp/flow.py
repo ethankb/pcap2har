@@ -1,4 +1,4 @@
-from direction import Direction
+import direction
 import common as tcp
 
 import seq # hopefully no name collisions
@@ -21,8 +21,8 @@ class Flow:
     still being searched for, False when we've given up on finding it.
     '''
     def __init__(self):
-        self.fwd = Direction(self)
-        self.rev = Direction(self)
+        self.fwd = direction.Direction(self)
+        self.rev = direction.Direction(self)
         self.handshake = None
         self.socket = None
         self.packets = []
