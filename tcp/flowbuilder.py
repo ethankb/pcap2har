@@ -36,12 +36,22 @@ class FlowBuilder:
             return
         # sort it into a tcp.Flow in flowdict
         if (src, dst) in self.flowdict:
-            self.flowdict[(src, dst)].add(pkt)
+          try:
+            self.flowdict[(src, dst)][-1].add(pkt)
+          except direction.SequenceError as err:
+            self.flowdict[(src, dst)].append(tcp.Flow())
+            for err_pkt in err.packets:
+              self.add(err_pkt)
         elif (dst, src) in self.flowdict:
-            self.flowdict[(dst, src)].add(pkt)
+          try:
+            self.flowdict[(dst, src)][-1].add(pkt)
+          except direction.SequenceError as err:
+            self.flowdict[(dst, src)].append(tcp.Flow())
+            for err_pkt in err.packets:
+              self.add(err_pkt)
         else:
             newflow = tcp.Flow()
             newflow.add(pkt)
-            self.flowdict[(src, dst)] = newflow
+            self.flowdict[(src, dst)] = [newflow]
     def finish(self):
-        map(tcp.Flow.finish, self.flowdict.itervalues())
+        map(lambda x: map(tcp.Flow.finish, x), self.flowdict.itervalues())

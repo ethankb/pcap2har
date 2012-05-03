@@ -20,3 +20,7 @@ strict_http_parse_body = True
 
 # Whether to pad missing data in TCP flows with 0 bytes
 pad_missing_tcp_data = True
+
+# Max gap in sequence numbers between back-to-back packets in one direction of a
+# flow before we decide it is a new flow
+max_sequence_gap = 1000000

@@ -7,6 +7,19 @@ import packet
 import seq
 
 
+class SequenceError(ValueError):
+  '''
+  Indicates attempt to add packets w/ out of range sequence numbers to Direction
+  '''
+  def __init__(self, packets):
+    '''
+    Args:
+      packets: list of out-of-range packets
+    '''
+    ValueError.__init__(self, 'Packet seq out of range')
+    self.packets = packets
+
+
 class Direction:
     '''
     Represents data moving in one direction in a TCP flow.
@@ -21,6 +34,7 @@ class Direction:
       only after seq_start is valid
     * final_arrival_pointer = the end sequence number of data that has
       completely arrived
+    * __seq_end = next highest sequence number, or None if no packets added
     '''
     def __init__(self, flow):
         '''
@@ -38,6 +52,7 @@ class Direction:
         self.final_data_chunk = None
         self.padding_size = 0
         self.padding_intervals = [] # tuples (start byte, length)
+        self.__seq_end = None
 
     def add(self, pkt):
         '''
@@ -48,7 +63,17 @@ class Direction:
 
         Args:
         pkt = tcp.Packet
+        Raises:
+        SequenceError
         '''
+        if ((not self.__seq_end is None) and
+            self.__seq_end + settings.max_sequence_gap < pkt.seq_start):
+          logging.warn('Attempt to add out-of-range TCP packet: %d vs %d',
+                       self.__seq_end, pkt.seq_start)
+          raise SequenceError([pkt])
+        if self.__seq_end is None or self.__seq_end < pkt.seq_end:
+          self.__seq_end = pkt.seq_end
+
         if self.finished:
             raise RuntimeError('tried to add packets to a finished tcp.Direction')
         # discard packets with no payload. we don't care about them here
@@ -136,6 +161,7 @@ class Direction:
                 return None
         else:
             return None
+
     def finish(self):
         '''
         Notifies the direction that there are no more packets coming. This means

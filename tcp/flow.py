@@ -6,6 +6,7 @@ from ..sortedcollection import SortedCollection
 from dpkt.tcp import *
 import logging as log
 
+
 class Flow:
     '''
     Represents TCP traffic across a given socket, ideally between a TCP
@@ -29,6 +30,9 @@ class Flow:
         '''
         called for every packet coming in, instead of iterating through
         a list
+
+        Raises:
+         tcp.direction.SequenceError
         '''
         # maintain an invariant that packets are ordered by ts;
         # perform ordered insertion (as in insertion sort) if they're
@@ -45,34 +49,54 @@ class Flow:
             if i == 0 or self.packets[i - 1].ts <= pkt.ts: break
         self.packets.insert(i, pkt)
 
-        # look out for handshake
-        # add it to the appropriate direction, if we've found or given up on
-        # finding handshake
-        if self.handshake is not None:
-            self.merge_pkt(pkt)
-        else: # if handshake is None, we're still looking for a handshake
-            if len(self.packets) > 13: # or something like that
-                # give up
-                self.handshake = False
-                self.socket = self.packets[0].socket
-                self.flush_packets() # merge all stored packets
-            # check last three packets
-            elif tcp.detect_handshake(self.packets[-3:]):
-                # function handles packets < 3 case
-                self.handshake = tuple(self.packets[-3:])
-                self.socket = self.handshake[0].socket
-                self.flush_packets()
+        try:
+          # look out for handshake
+          # add it to the appropriate direction, if we've found or given up on
+          # finding handshake
+          if self.handshake is not None:
+              self.merge_pkt(pkt)
+          else: # if handshake is None, we're still looking for a handshake
+              if len(self.packets) > 13: # or something like that
+                  # give up
+                  self.handshake = False
+                  self.socket = self.packets[0].socket
+                  self.flush_packets() # merge all stored packets
+              # check last three packets
+              elif tcp.detect_handshake(self.packets[-3:]):
+                  # function handles packets < 3 case
+                  self.handshake = tuple(self.packets[-3:])
+                  self.socket = self.handshake[0].socket
+                  self.flush_packets()
+        except direction.SequenceError as err:
+          for pkt in err.packets:
+            # TODO(ethankb): potential bad case if we removed the handshake?
+            self.packets.remove(pkt)
+
     def flush_packets(self):
         '''
         Flush packet buffer by merging all packets into either fwd or rev.
+
+        Raises:
+         tcp.direction.SequenceError
         '''
+        out_of_sequence_pkts = []
         for p in self.packets:
+          try:
             self.merge_pkt(p)
+          except direction.SequenceError as err:
+            log.warn('SequenceError flushing packets: %s',err)
+            out_of_seqence_pkts += err.packets
+        if out_of_sequence_pkts:
+          raise direction.SequenceError(out_of_sequence_pkts)
+
 
     def merge_pkt(self, pkt):
         '''
         Merges the packet into either the forward or reverse stream, depending
         on its direction.
+
+        Raises:
+         tcp.direction.SequenceError
         '''
         if self.samedir(pkt):
             self.fwd.add(pkt)
