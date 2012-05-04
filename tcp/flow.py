@@ -68,9 +68,13 @@ class Flow:
                   self.socket = self.handshake[0].socket
                   self.flush_packets()
         except direction.SequenceError as err:
+          log.warn('SequenceError add packets: %d total',len(err.packets))
           for pkt in err.packets:
             # TODO(ethankb): potential bad case if we removed the handshake?
             self.packets.remove(pkt)
+          raise err
+        log.info('(%s) Adding pkt(%s,%s-%s) to flow',
+                 self, pkt.ts, pkt.seq_start, pkt.seq_end)
 
     def flush_packets(self):
         '''
@@ -87,6 +91,8 @@ class Flow:
             log.warn('SequenceError flushing packets: %s',err)
             out_of_seqence_pkts += err.packets
         if out_of_sequence_pkts:
+          log.warn('Reraising SequenceError for %d packets',
+                   len(out_of_sequenec_pkts))
           raise direction.SequenceError(out_of_sequence_pkts)
 
 

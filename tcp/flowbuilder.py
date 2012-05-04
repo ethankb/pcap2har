@@ -38,20 +38,32 @@ class FlowBuilder:
             return
         # sort it into a tcp.Flow in flowdict
         if (src, dst) in self.flowdict:
+          log.info('Adding to %s->%s %s', src, dst, pkt)
           try:
             self.flowdict[(src, dst)][-1].add(pkt)
           except direction.SequenceError as err:
+            log.warn('SequenceError add packets: %d total',len(err.packets))
             self.flowdict[(src, dst)].append(tcp.Flow())
+            log.info('Adding new flow %s->%s', src, dst)
+            log.info('Adding %d packets to it:\n%s', len(err.packets),
+                     err.packets)
             for err_pkt in err.packets:
               self.add(err_pkt)
         elif (dst, src) in self.flowdict:
+          log.info('Adding to %s->%s %s', dst, src, pkt)
           try:
             self.flowdict[(dst, src)][-1].add(pkt)
           except direction.SequenceError as err:
+            log.warn('SequenceError add packets: %d total',len(err.packets))
             self.flowdict[(dst, src)].append(tcp.Flow())
+            log.info('Adding new flow %s->%s', dst, src)
+            log.info('Adding %d packets to it:\n%s', len(err.packets),
+                     err.packets)
             for err_pkt in err.packets:
               self.add(err_pkt)
         else:
+            log.info('Adding to %s->%s %s', src, dst, pkt)
+            log.info('Adding new flow %s->%s', src, dst)
             newflow = tcp.Flow()
             newflow.add(pkt)
             self.flowdict[(src, dst)] = [newflow]

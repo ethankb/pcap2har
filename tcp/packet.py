@@ -1,5 +1,6 @@
 import dpkt
 import logging
+from pcap2har import settings
 from ..pcaputil import friendly_socket
 from ..pcaputil import friendly_tcp_flags
 from ..pcaputil import friendly_data
@@ -8,7 +9,7 @@ class Packet(object):
     '''
     Represents a TCP packet. Copied from pyper, with additions. contains
     socket, timestamp, and data
-    
+
     Members:
     ts = dpkt timestamp
     buf = original data from which eth was constructed
@@ -70,6 +71,9 @@ class PadPacket(Packet):
   Represents a fake TCP packet used for padding missing data.
   '''
   def __init__(self, seq, size, ts):
+    if size > settings.max_sequence_gap:
+      raise ValueError('PadPacket of size %d > %s', size,
+                       settings.max_sequence_gap) 
     self.ts = ts
     self.buf = None
     self.eth = None

@@ -66,10 +66,16 @@ class Direction:
         Raises:
         SequenceError
         '''
+        if self.seq_start and self.seq_start > pkt.seq_start + 1:
+          logging.warn('Attempt to add TCP packet before SYN'
+                       ' %d > %d for %s and %s',
+                       self.seq_start, pkt.seq_start, self, pkt)
+          raise SequenceError([pkt])
         if ((not self.__seq_end is None) and
             self.__seq_end + settings.max_sequence_gap < pkt.seq_start):
-          logging.warn('Attempt to add out-of-range TCP packet: %d vs %d',
-                       self.__seq_end, pkt.seq_start)
+          logging.warn('Attempt to add out-of-range TCP packet'
+                       ' %d < %d for %s and %s',
+                       self.__seq_end, pkt.seq_start, self, pkt)
           raise SequenceError([pkt])
         if self.__seq_end is None or self.__seq_end < pkt.seq_end:
           self.__seq_end = pkt.seq_end
@@ -245,8 +251,9 @@ class Direction:
         gap = chunk.seq_start - prev_chunk.seq_end
         self.padding_size += gap
         if gap > 0:
-          logging.info('Padding %d missing bytes at %d for %s %d',
-                       gap, prev_chunk.seq_end, self, self.padding_size)
+          logging.info('Padding %d missing bytes at %d-%d for %s %d',
+                       gap, prev_chunk.seq_end, chunk.seq_start, self,
+                       self.padding_size)
           first_chunk_pkt = self.seq_arrival(chunk.seq_start)
           chunk_ts = first_chunk_pkt.ts
           pad_pkt = packet.PadPacket(prev_chunk.seq_end, gap, chunk_ts)
