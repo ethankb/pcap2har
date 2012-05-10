@@ -14,7 +14,7 @@ allow_empty_mediatype = False
 # allowable patterns.
 strict_mediatype_parsing = False
 
-# Whether HTTP parsing should case whether the content length matches the
+# Whether HTTP parsing should care whether the content length matches the
 # content-length header.
 strict_http_parse_body = True
 

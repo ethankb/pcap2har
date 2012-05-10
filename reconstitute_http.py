@@ -24,6 +24,8 @@ parser.add_option('--strict_mediatype_parsing', action="store_true",
 parser.add_option('--no-pages', action="store_false", dest="pages", default=True)
 parser.add_option('--no-padding-in-output', action="store_false",
                   dest="padding_in_output", default=True)
+parser.add_option('--no-strict_http_parse_body', action="store_false",
+                  dest="strict_http_parse_body", default=True)
 parser.add_option('--pad_missing_tcp_data', action="store_true",
                   dest="pad_missing_tcp_data", default=False)
 # Whether to write HTTP responses, one per file.
@@ -35,6 +37,7 @@ settings.pad_missing_tcp_data = options.pad_missing_tcp_data
 settings.allow_trailing_semicolon = options.allow_trailing_semicolon
 settings.allow_empty_mediatype = options.allow_empty_mediatype
 settings.strict_mediatype_parsing = options.strict_mediatype_parsing
+settings.strict_http_parse_body = options.strict_http_parse_body
 
 # setup logs
 logging.basicConfig(filename='reconstitute_http.log', level=logging.INFO)
