@@ -92,7 +92,7 @@ class Flow:
             out_of_sequence_pkts += err.packets
         if out_of_sequence_pkts:
           log.warn('Reraising SequenceError for %d packets',
-                   len(out_of_seqence_pkts))
+                   len(out_of_sequence_pkts))
           raise direction.SequenceError(out_of_sequence_pkts)
 
 
