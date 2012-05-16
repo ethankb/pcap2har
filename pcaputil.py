@@ -3,6 +3,8 @@ Various small, useful functions which have no other home.
 '''
 
 import dpkt
+import logging
+import socket
 
 def friendly_tcp_flags(flags):
     '''
@@ -15,15 +17,28 @@ def friendly_tcp_flags(flags):
     #join all their string representations with '|'
     return '|'.join(t[1] for t in active_flags)
 
+def friendly_ip(hexstring):
+  '''
+  returns a human-friendly dotted IP (or IPv6 equivalent)
+  '''
+  try:
+    return socket.inet_ntoa(hexstring)
+  except socket.error:
+    try:
+      return socket.inet_ntop(socket.AF_INET6, hexstring)
+    except socket.error:
+      logging.warn('Unable to parse IP %s', hexstring)
+      return hexstring
+
 def friendly_socket(sock):
     '''
     returns a human-friendly string representing a socket in the format:
     ((sip, sport),(dip, sport))
     '''
-    return '((%s, %d), (%s, %d))' % (
-        sock[0][0],
+    return '((%s:%d), (%s:%d))' % (
+        friendly_ip(sock[0][0]),
         sock[0][1],
-        sock[1][0],
+        friendly_ip(sock[1][0]),
         sock[1][1]
     )
 
