@@ -65,7 +65,7 @@ for flowlist in dispatcher.tcp.flowdict.itervalues():
   for flow in flowlist:
     fwd = flow.fwd.data
     rev = flow.rev.data
-    socket = pcaputil.friendly_socket(flow.socket)
+    socket = pcaputil.friendly_socket(flow.socket).translate(None, '() ')
 
     fn = '%s-%s-%d' % (outputfile, socket, fnum)
     fnum += 1
