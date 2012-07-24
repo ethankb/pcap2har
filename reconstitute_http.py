@@ -22,6 +22,8 @@ parser.add_option('--allow_empty_mediatype', action="store_true",
 parser.add_option('--strict_mediatype_parsing', action="store_true",
                   dest="strict_mediatype_parsing", default=False)
 parser.add_option('--no-pages', action="store_false", dest="pages", default=True)
+parser.add_option('--no-padding-in-output', action="store_false",
+                  dest="padding_in_output", default=True)
 parser.add_option('--pad_missing_tcp_data', action="store_true",
                   dest="pad_missing_tcp_data", default=False)
 # Whether to write HTTP responses, one per file.
@@ -87,7 +89,10 @@ for tcpflow in dispatcher.tcp.flowdict.itervalues():
                             r.__class__.__name__.lower())
       fnum += 1
       with open(fn, 'w') as f:
-        f.write(r.raw_msg)
+        f.write(r.raw_message(not options.padding_in_output))
+      if r.bytes_of_padding > 0:
+        logging.info("%s has %d bytes of padding out of %d", fn, r.bytes_of_padding,
+                     r.data_consumed)
   else:
     # flow is not HTTP
     logging.warn('TCP Flow does not contain HTTP')

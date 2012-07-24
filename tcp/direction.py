@@ -6,6 +6,7 @@ from pcap2har import settings
 import packet
 import seq
 
+
 class Direction:
     '''
     Represents data moving in one direction in a TCP flow.
@@ -35,6 +36,8 @@ class Direction:
         self.final_arrival_pointer = None
         self.chunks = []
         self.final_data_chunk = None
+        self.padding_size = 0
+        self.padding_intervals = [] # tuples (start byte, length)
 
     def add(self, pkt):
         '''
@@ -214,11 +217,13 @@ class Direction:
       prev_chunk = self.chunks[0]
       for chunk in self.chunks[1:]:
         gap = chunk.seq_start - prev_chunk.seq_end
+        self.padding_size += gap
         if gap > 0:
-          logging.info('Padding %d missing bytes at %d',
-                       gap, prev_chunk.seq_end)
+          logging.info('Padding %d missing bytes at %d for %s %d',
+                       gap, prev_chunk.seq_end, self, self.padding_size)
           first_chunk_pkt = self.seq_arrival(chunk.seq_start)
           chunk_ts = first_chunk_pkt.ts
           pad_pkt = packet.PadPacket(prev_chunk.seq_end, gap, chunk_ts)
           self.add(pad_pkt)
+          self.padding_intervals.append((prev_chunk.seq_end + 1, gap))
         prev_chunk = chunk
